@@ -1,0 +1,171 @@
+#version 460
+#extension GL_EXT_ray_tracing : require
+#extension GL_GOOGLE_include_directive : require
+#extension GL_EXT_nonuniform_qualifier : require
+#extension GL_EXT_buffer_reference2 : require
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
+
+#include "scene/resources.glsl"
+#include "core/checkerboard.glsl"
+#define ADV_PRIMARY_HIT_WRITE
+#include "path/primary/hit_buffer.glsl"
+
+layout(set = 1, binding = 0) uniform accelerationStructureEXT topLevelAS;
+layout(location = 0) rayPayloadEXT HitPayload hitPayload;
+
+#define ADV_FIRST_PERSON_LEARN_ATLAS
+#include "path/primary/trace.glsl"
+#ifndef ADV_AURORA_MODE
+#    define ADV_AURORA_MODE 1
+#endif
+#if ADV_AURORA_MODE != 0
+#    define ADV_CLIMATE_SAMPLE_GROUND
+#    include "environment/climate.glsl"
+#endif
+#ifndef ADV_FAR_FOG_MODE
+#    define ADV_FAR_FOG_MODE 0
+#endif
+#if ADV_FAR_FOG_MODE == 1
+#    include "environment/sunlit_state.glsl"
+
+// Sunlit: how open to the sky the camera is, for "Distant Fog: Outdoors only". One invocation traces a few
+// cosine-distributed upward rays from the camera each frame; rays that leave the world without hitting a block
+// count as open sky. The result is smoothed over ~1/2 second.
+void probeSunlitSkyOpenness(vec3 origin) {
+    const int rayCount = 6;
+    float rotation = float(worldUBO.seed & 1023u) * (6.28318530717958648 / 1024.0);
+    float jitter = float((worldUBO.seed >> 10u) & 255u) / 256.0;
+    float open = 0.0;
+    for (int i = 0; i < rayCount; ++i) {
+        float u = (float(i) + jitter) / float(rayCount);
+        float sinTheta = sqrt(u);
+        float cosTheta = sqrt(max(1.0 - u, 0.0));
+        float phi = rotation + float(i) * 2.39996322972865332;
+        vec3 direction = vec3(cos(phi) * sinTheta, cosTheta, sin(phi) * sinTheta);
+        HitPayload probe = tracePrimaryHit(origin, direction, 0.05, 192.0, 0.0, 0.0, ADV_TRACE_ROLE_PRIMARY,
+                                           WORLD_MASK, uint(ADV_RAY_FLAGS) | gl_RayFlagsTerminateOnFirstHitEXT);
+        if (!isHitValid(probe)) { open += 1.0; }
+    }
+    float frameOpenness = open / float(rayCount);
+    if (!isSunlitStateValid()) { return; }
+    sunlitSkyOpenness = clamp(mix(sunlitSkyOpenness, frameOpenness, 0.04), 0.0, 1.0);
+}
+#endif
+
+bool discoveryProjectPreviousPosition(vec3 previousPosition,
+                                      vec2 currentPixelCenter,
+                                      vec2 resolution,
+                                      out vec2 motion) {
+    motion = vec2(0.0);
+    vec4 previousView = lastWorldUBO.cameraEffectedViewMat * vec4(previousPosition, 1.0);
+    if (any(isnan(previousView)) || any(isinf(previousView)) || previousView.z >= -1e-6) { return false; }
+    vec4 previousClip = lastWorldUBO.cameraProjMat * previousView;
+    if (any(isnan(previousClip)) || any(isinf(previousClip)) || previousClip.w <= 1e-8) { return false; }
+    vec2 previousNdc = previousClip.xy / previousClip.w;
+    vec2 previousPixel = (previousNdc * 0.5 + 0.5) * resolution;
+    motion = previousPixel - currentPixelCenter;
+    return !any(isnan(motion)) && !any(isinf(motion));
+}
+
+bool buildDiscoveryTemporal(HitPayload hit,
+                            vec3 rayOrigin,
+                            vec3 rayDirection,
+                            ivec2 flatPixel,
+                            ivec2 flatExtent,
+                            out float depth,
+                            out vec2 motion) {
+    depth = ADV_PRIMARY_TEMPORAL_INVALID_DEPTH;
+    motion = vec2(0.0);
+    if (!isHitValid(hit)) { return false; }
+
+    vec3 position = rayOrigin + rayDirection * hit.hitT;
+    if (any(isnan(position)) || any(isinf(position))) { return false; }
+    depth = -(worldUBO.cameraEffectedViewMat * vec4(position, 1.0)).z;
+    if (isnan(depth) || isinf(depth) || depth < 0.0) { return false; }
+
+    vec3 previousPosition = position + vec3(worldUBO.cameraPos.xyz - lastWorldUBO.cameraPos.xyz);
+    if (isChunkGeometryBufferIndex(hit.geometryBufferIndex)) { return true; }
+    if (!isChunkGeometryBufferIndex(hit.geometryBufferIndex)) {
+        vec2 normalizedBarycentrics;
+        if (!normalizePrimaryHitBarycentrics(hit.barycentrics, normalizedBarycentrics)) { return false; }
+        vec3 bary = vec3(1.0 - normalizedBarycentrics.x - normalizedBarycentrics.y, normalizedBarycentrics);
+        uint i0, i1, i2;
+        loadTriangleIndices(hit.geometryBufferIndex, hit.primitiveId, i0, i1, i2);
+        PositionVertex p0 = loadPositionVertex(hit.geometryBufferIndex, i0);
+        PositionVertex p1 = loadPositionVertex(hit.geometryBufferIndex, i1);
+        PositionVertex p2 = loadPositionVertex(hit.geometryBufferIndex, i2);
+        vec3 localPosition = bary.x * p0.pos + bary.y * p1.pos + bary.z * p2.pos;
+        if (!loadPreviousGeometryWorldPosition(hit.geometryBufferIndex, hit.primitiveId, hit.instanceIndex, bary,
+                                               localPosition, previousPosition)) {
+            previousPosition = position + vec3(worldUBO.cameraPos.xyz - lastWorldUBO.cameraPos.xyz);
+        }
+    }
+    vec2 pixelCenter = vec2(flatPixel) + 0.5 + worldUBO.cameraJitter;
+    if (!discoveryProjectPreviousPosition(previousPosition, pixelCenter, vec2(flatExtent), motion)) {
+        motion = vec2(0.0);
+    }
+    return true;
+}
+
+// Sunlit: layers drawn over an entity's skin in the same plane (spider, enderman and phantom eyes, ...) tie with the
+// skin at exactly the same ray distance, and which of the two the hardware reports is arbitrary - so the glowing
+// eyes of some mobs rendered dark (the skin won). Vanilla draws these layers after the skin with a less-or-equal
+// depth test, so they win the tie; do the same by looking for an alpha-blended layer at the skin's distance.
+HitPayload preferCoplanarEntityOverlay(HitPayload hit, vec3 origin, vec3 direction, float coneSpread) {
+    if (!isHitValid(hit) || isChunkGeometryBufferIndex(hit.geometryBufferIndex) ||
+        (hit.instanceMask & (PLAYER_MASK | HAND_MASK | CLOUD_MASK)) != 0u || hit.hitT <= 0.0) {
+        return hit;
+    }
+    float window = 0.001 + hit.hitT * 2e-4;
+    HitPayload overlay = tracePrimaryHit(origin, direction, max(hit.hitT - window, 0.0), hit.hitT + window, 0.0,
+                                         coneSpread, ADV_TRACE_ROLE_OVERLAY, hit.instanceMask,
+                                         uint(ADV_RAY_FLAGS) | gl_RayFlagsCullOpaqueEXT);
+    if (!isHitValid(overlay) || isChunkGeometryBufferIndex(overlay.geometryBufferIndex)) { return hit; }
+    overlay.role = hit.role;
+    overlay.coneWidth = hit.coneWidth;
+    overlay.coneSpread = hit.coneSpread;
+    return overlay;
+}
+
+void main() {
+    ivec2 packedPixel = ivec2(gl_LaunchIDEXT.xy);
+    ivec2 flatExtent = ivec2(int(ADV_RENDER_WIDTH), int(ADV_RENDER_HEIGHT));
+    if (!isPackedCoordinateInBounds(packedPixel, flatExtent)) { return; }
+#if ADV_FAR_FOG_MODE == 1
+    if (packedPixel == ivec2(0) && worldUBO.skyType == 1u) {
+        vec3 probeOrigin;
+        vec3 probeDirection;
+        float probeSpread;
+        buildPrimaryCameraRay(ivec2(0), flatExtent, probeOrigin, probeDirection, probeSpread);
+        probeSunlitSkyOpenness(probeOrigin);
+    }
+#endif
+
+    CheckerCoordinate checker = checkerToFlat(packedPixel, flatExtent);
+    HitPayload hit;
+    resetHit(hit, 0.0, 0.0, ADV_TRACE_ROLE_PRIMARY);
+    if (!checker.isValid) {
+        storePrimaryHit(packedPixel, hit, ADV_PRIMARY_TEMPORAL_INVALID_DEPTH, vec2(0.0), 0u);
+        return;
+    }
+
+    vec3 cameraOrigin;
+    vec3 cameraDirection;
+    float coneSpread;
+    buildPrimaryCameraRay(checker.flatPixel, flatExtent, cameraOrigin, cameraDirection, coneSpread);
+    uint cameraMedium = isCameraUnderwater(skyUBO.cameraSubmersionType) ? ADV_MEDIUM_WATER : ADV_MEDIUM_AIR;
+    uint rayBudgetUsed = 0u;
+    hit = findSegmentHitWithTraceLimit(cameraOrigin, cameraDirection, 0.0, coneSpread, cameraMedium, true, false,
+                                       ADV_PATH_RAY_BUDGET, rayBudgetUsed);
+    hit = preferCoplanarEntityOverlay(hit, cameraOrigin, cameraDirection, coneSpread);
+
+#if ADV_AURORA_MODE != 0
+    sampleSunlitGroundClimate(hit, cameraDirection, gl_LaunchIDEXT.xy);
+#endif
+
+    float temporalDepth;
+    vec2 temporalMotion;
+    buildDiscoveryTemporal(hit, cameraOrigin, cameraDirection, checker.flatPixel, flatExtent, temporalDepth,
+                           temporalMotion);
+    storePrimaryHit(packedPixel, hit, temporalDepth, temporalMotion, rayBudgetUsed);
+}
