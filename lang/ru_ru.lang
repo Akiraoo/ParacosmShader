@@ -51,12 +51,6 @@ render_pipeline.module.main_render.attribute.block_emission_strength=Яркос�
 render_pipeline.module.main_render.attribute.block_emission_strength.description=Яркость светящихся блоков (факелы, лава, светокамень, магма...) - и самого свечения, и света, который они дают.
 render_pipeline.module.main_render.attribute.entity_emission_strength=Яркость свечения предметов и мобов
 render_pipeline.module.main_render.attribute.entity_emission_strength.description=Яркость светящихся предметов (в руке и на земле), мобов и блоков-сущностей - и свечения, и света, который они дают.
-render_pipeline.module.main_render.attribute.magma_emission=Яркость блока магмы
-render_pipeline.module.main_render.attribute.magma_emission.description=Дополнительный множитель яркости только для блока магмы (и свечение, и свет). 1.0 = без изменений, 0.0 = ни свечения, ни света.
-render_pipeline.module.main_render.attribute.redstone_ore_emission=Яркость светящейся редстоуновой руды
-render_pipeline.module.main_render.attribute.redstone_ore_emission.description=Дополнительный множитель яркости только для светящейся редстоуновой руды (и свечение, и свет). 1.0 = без изменений, 0.0 = ни свечения, ни света.
-render_pipeline.module.main_render.attribute.glow_lichen_emission=Яркость светящегося лишайника
-render_pipeline.module.main_render.attribute.glow_lichen_emission.description=Дополнительный множитель яркости только для светящегося лишайника (и свечение, и свет). 1.0 = без изменений, 0.0 = ни свечения, ни света.
 render_pipeline.module.main_render.attribute.restir_range_xz.description=Горизонтальный радиус поиска кандидатов для прямого освещения.
 render_pipeline.module.main_render.attribute.restir_range_y.description=Вертикальный радиус поиска кандидатов для прямого освещения.
 render_pipeline.module.main_render.attribute.initial_samples.description=Сколько источников света перебирается на первом шаге прямого освещения.
@@ -230,3 +224,20 @@ render_pipeline.module.main_render.attribute.waving_foliage=Покачивани
 render_pipeline.module.main_render.attribute.waving_foliage.description=Плавное покачивание травы, цветов, посевов и листвы на ветру.
 render_pipeline.module.main_render.attribute.vanilla_sun=Ванильное солнце
 render_pipeline.module.main_render.attribute.vanilla_sun.description=Использовать обычную квадратную текстуру солнца из Minecraft вместо 3D-солнца шейдера.
+render_pipeline.module.main_render.attribute.emission_debug=Отладка свечения
+render_pipeline.module.main_render.attribute.emission_debug.description=Инструмент отладки, оставьте «Выкл». Красит блоки, которые видит камера, в плоские яркие цвета по данным о свечении, которые Radiance передаёт шейдеру. Вершинное свечение / со сдвигом: значение в 8 интервалах (чёрный, красный, жёлтый, зелёный, голубой, синий, пурпурный, белый). Свечение текстуры: альфа specular-карты. Флаги: R = полная грань блока, G = есть specular-карта, B = непрозрачный блок. Мобы, небо и вода не затрагиваются.
+render_pipeline.module.main_render.attribute.emission_debug_mode.off=Выкл
+render_pipeline.module.main_render.attribute.emission_debug_mode.vertex=1: Вершинное свечение
+render_pipeline.module.main_render.attribute.emission_debug_mode.vertex_shifted=2: Вершинное свечение (сдвиг)
+render_pipeline.module.main_render.attribute.emission_debug_mode.texture=3: Свечение текстуры
+render_pipeline.module.main_render.attribute.emission_debug_mode.flags=4: Флаги
+render_pipeline.module.main_render.attribute.magma_emission_strength=Яркость свечения магмы
+render_pipeline.module.main_render.attribute.magma_emission_strength.description=Множитель свечения трещин магмы и света от неё (без необходимости ставить ресурспак). 0.12 соответствует уровню SPBR, 1.0 — стандартная яркость Radiance.
+render_pipeline.module.main_render.attribute.redstone_ore_emission_strength=Яркость редстоуновой руды
+render_pipeline.module.main_render.attribute.redstone_ore_emission_strength.description=Множитель свечения крупинок редстоуновой руды (обычной и глубинной) и света от неё. 0.15 — мягкое свечение по умолчанию, 1.0 — стандартная яркость Radiance.
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength=Яркость светящегося лишайника
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength.description=Множитель света, который излучает светящийся лишайник (на блоках, в руке и на полу). По умолчанию 3.5 (усиливает слишком слабый стандартный свет), 1.0 — стандартная яркость Radiance.
+render_pipeline.module.main_render.attribute.custom_block_emission=Настроить яркость блоков
+render_pipeline.module.main_render.attribute.custom_block_emission.description=Включает отдельную настройку силы света от магмы, редстоуновой руды и светящегося лишайника без ресурспаков. Если вы используете PBR-ресурспак (например, SPBR), который сам настраивает эти блоки, параметр можно выключить.
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength=Яркость светящегося лишайника
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength.description=Множитель света, который излучает светящийся лишайник (на блоках, в руке и на полу). По умолчанию 3.5 (усиливает слишком слабый стандартный свет), 1.0 — стандартная яркость Radiance.

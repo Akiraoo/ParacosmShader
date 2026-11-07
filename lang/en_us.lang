@@ -51,12 +51,6 @@ render_pipeline.module.main_render.attribute.block_emission_strength=Block Light
 render_pipeline.module.main_render.attribute.block_emission_strength.description=Brightness of glowing blocks (torches, lava, glowstone, magma...) - both their glow and the light they cast.
 render_pipeline.module.main_render.attribute.entity_emission_strength=Item & Mob Glow Brightness
 render_pipeline.module.main_render.attribute.entity_emission_strength.description=Brightness of glowing items (held or dropped), mobs and block entities - both their glow and the light they cast.
-render_pipeline.module.main_render.attribute.magma_emission=Magma Block Brightness
-render_pipeline.module.main_render.attribute.magma_emission.description=Extra brightness multiplier for Magma Blocks only (glow and cast light). 1.0 = unchanged, 0.0 = no glow and no light.
-render_pipeline.module.main_render.attribute.redstone_ore_emission=Lit Redstone Ore Brightness
-render_pipeline.module.main_render.attribute.redstone_ore_emission.description=Extra brightness multiplier for lit Redstone Ore only (glow and cast light). 1.0 = unchanged, 0.0 = no glow and no light.
-render_pipeline.module.main_render.attribute.glow_lichen_emission=Glow Lichen Brightness
-render_pipeline.module.main_render.attribute.glow_lichen_emission.description=Extra brightness multiplier for Glow Lichen only (glow and cast light). 1.0 = unchanged, 0.0 = no glow and no light.
 render_pipeline.module.main_render.attribute.restir_range_xz.description=Controls the horizontal search range for direct lighting candidates.
 render_pipeline.module.main_render.attribute.restir_range_y.description=Controls the vertical search range for direct lighting candidates.
 render_pipeline.module.main_render.attribute.initial_samples.description=Controls the number of light candidates sampled during initial direct lighting.
@@ -231,3 +225,20 @@ render_pipeline.module.main_render.attribute.waving_foliage=Waving Foliage
 render_pipeline.module.main_render.attribute.waving_foliage.description=Gentle wind animation for grass, flowers, crops and leaves.
 render_pipeline.module.main_render.attribute.vanilla_sun=Vanilla Sun
 render_pipeline.module.main_render.attribute.vanilla_sun.description=Use the vanilla Minecraft sun texture instead of the shader's 3D sun.
+render_pipeline.module.main_render.attribute.emission_debug=Emission Debug View
+render_pipeline.module.main_render.attribute.emission_debug.description=Debug tool, keep Off. Paints blocks seen by the camera in flat bright colours showing the emission data Radiance gives the shader. Vertex emission / shifted: value in 8 bins (black, red, yellow, green, cyan, blue, magenta, white). Texture emission: alpha of the specular map. Flags: R = full block face, G = specular map present, B = opaque. Entities, sky and water are not affected.
+render_pipeline.module.main_render.attribute.emission_debug_mode.off=Off
+render_pipeline.module.main_render.attribute.emission_debug_mode.vertex=1: Vertex emission
+render_pipeline.module.main_render.attribute.emission_debug_mode.vertex_shifted=2: Vertex emission (shifted bins)
+render_pipeline.module.main_render.attribute.emission_debug_mode.texture=3: Texture emission
+render_pipeline.module.main_render.attribute.emission_debug_mode.flags=4: Flags
+render_pipeline.module.main_render.attribute.magma_emission_strength=Magma Glow Brightness
+render_pipeline.module.main_render.attribute.magma_emission_strength.description=Multiplier for magma crack glow and the light it casts without requiring a resource pack. 0.12 matches SPBR, 1.0 is default Radiance brightness.
+render_pipeline.module.main_render.attribute.redstone_ore_emission_strength=Redstone Ore Glow Brightness
+render_pipeline.module.main_render.attribute.redstone_ore_emission_strength.description=Multiplier for redstone ore (and deepslate redstone ore) speck glow and the light it casts. 0.15 is soft default glow, 1.0 is default Radiance brightness.
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength=Glow Lichen Light Brightness
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength.description=Multiplier for the light cast by glow lichen (placed, held, or dropped). Default is 3.5 to boost its weak built-in light, 1.0 is default Radiance brightness.
+render_pipeline.module.main_render.attribute.custom_block_emission=Customize Block Light Brightness
+render_pipeline.module.main_render.attribute.custom_block_emission.description=Enables individual light brightness controls for magma, redstone ore, and glow lichen without requiring a resource pack. Can be turned Off when using a PBR resource pack (such as SPBR) that already adjusts these blocks.
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength=Glow Lichen Light Brightness
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength.description=Multiplier for the light cast by glow lichen (placed, held, or dropped). Default is 3.5 to boost its weak built-in light, 1.0 is default Radiance brightness.

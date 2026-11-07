@@ -20,6 +20,7 @@
 #include "util/vista_material.glsl"
 
 #include "lighting/emission_scale.glsl"
+#include "lighting/emission_debug.glsl"
 
 vec3 opticalInterfaceNormal(Surface surface, vec3 incidentDirection) {
     vec3 geometryNormal = normalize(surface.geometryNormal, vec3(0.0, 1.0, 0.0));
@@ -237,16 +238,19 @@ bool decodeSurface(
 
     vec3 shadingNormal = geometryNormal;
     vec3 emission = vec3(0.0);
+    float faceArea = 0.5 * length(cross(worldP1 - worldP0, worldP2 - worldP0));
     if (usesSurfaceMaterial) {
         shadingNormal = applyNormalMap(material.normal, tangent, bitangent, geometryNormal, -rayDirection);
         float vertexEmission = bary.x * m0.albedoEmission + bary.y * m1.albedoEmission + bary.z * m2.albedoEmission;
-        float totalEmissionAmount = material.emission + vertexEmission;
-        if (shouldUseTexture) {
-            float faceArea = 0.5 * length(cross(worldP1 - worldP0, worldP2 - worldP0));
-            sunlitAdjustBlockSurfaceEmission(alphaMode, albedoSample.rgb, vertexEmission, faceArea, isChunkGeo,
-                                             totalEmissionAmount);
+        float totalRawEmission = material.emission + vertexEmission;
+        float blockLightScale = 1.0;
+        if (!shouldEvaluateParallax && shouldUseTexture && textureMap.specular >= 0 && totalRawEmission > 0.001) {
+            blockLightScale = sunlitBlockTextureEmissionScale(
+                textures[nonuniformEXT(m0.textureID)], textures[nonuniformEXT(textureMap.specular)], atlasMin,
+                atlasMax, albedoSample.rgb, totalRawEmission, faceArea, rayDistance, alphaMode, isChunkGeo);
         }
-        emission = max(emissionTint * totalEmissionAmount * sunlitEmissionScale(isChunkGeo), vec3(0.0));
+        emission = max(emissionTint * totalRawEmission * blockLightScale * sunlitEmissionScale(isChunkGeo),
+                       vec3(0.0));
     }
 
     if (isWater) {
@@ -293,6 +297,17 @@ bool decodeSurface(
         applyGroundWetness(material, groundWetness(planePosition, outwardNormal));
         tint = material.albedo;
     }
+
+#if ADV_DEBUG_EMISSION != 0
+    // Sunlit debug view (see lighting/emission_debug.glsl): only blocks seen directly by the camera.
+    if (shouldEvaluateParallax && isChunkGeo && usesSurfaceMaterial && shouldUseTexture) {
+        float debugVertexEmission =
+            bary.x * m0.albedoEmission + bary.y * m1.albedoEmission + bary.z * m2.albedoEmission;
+        emission = sunlitDebugEmissionColor(debugVertexEmission, material.emission, faceArea,
+                                            textureMap.specular >= 0, alphaMode);
+        tint *= SUNLIT_DEBUG_ALBEDO_SCALE;
+    }
+#endif
 
     surface.isValid = isFinite(position) && isFinite(rayDistance) && rayDistance >= 0.0 && isFinite(geometryNormal) &&
                       isFinite(shadingNormal) && isFinite(tint);

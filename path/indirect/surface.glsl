@@ -258,12 +258,15 @@ bool decodeSurfaceMaterial(HitPayload hit,
 
     float vertexEmission =
         geometry.bary.x * m0.albedoEmission + geometry.bary.y * m1.albedoEmission + geometry.bary.z * m2.albedoEmission;
-    float totalEmissionAmount = material.emission + vertexEmission;
-    if (shouldUseTexture && !isWater && !isCloud) {
-        sunlitAdjustBlockSurfaceEmission(alphaMode, albedoSample.rgb, vertexEmission, geometry.triangleArea,
-                                         isChunkGeo, totalEmissionAmount);
+    float totalRawEmission = material.emission + vertexEmission;
+    float blockLightScale = 1.0;
+    if (shouldUseTexture && textureMap.specular >= 0 && totalRawEmission > 0.001) {
+        blockLightScale = sunlitBlockTextureEmissionScale(
+            textures[nonuniformEXT(m0.textureID)], textures[nonuniformEXT(textureMap.specular)], atlasMin, atlasMax,
+            albedoSample.rgb, totalRawEmission, geometry.triangleArea, geometry.rayDistance, alphaMode, isChunkGeo);
     }
-    vec3 emission = max(emissionTint * totalEmissionAmount * sunlitEmissionScale(isChunkGeo), vec3(0.0));
+    vec3 emission =
+        max(emissionTint * totalRawEmission * blockLightScale * sunlitEmissionScale(isChunkGeo), vec3(0.0));
     if (isWater) {
         surfaceAlpha = 0.0;
         material.f0 = vec3(0.02);

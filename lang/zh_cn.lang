@@ -51,12 +51,6 @@ render_pipeline.module.main_render.attribute.block_emission_strength=方块发�
 render_pipeline.module.main_render.attribute.block_emission_strength.description=发光方块（火把、岩浆、荧石、岩浆块等）的亮度，同时影响发光与照明。
 render_pipeline.module.main_render.attribute.entity_emission_strength=物品与生物发光亮度
 render_pipeline.module.main_render.attribute.entity_emission_strength.description=发光物品（手持或掉落）、生物与方块实体的亮度，同时影响发光与照明。
-render_pipeline.module.main_render.attribute.magma_emission=岩浆块亮度
-render_pipeline.module.main_render.attribute.magma_emission.description=仅针对岩浆块的额外亮度倍率（发光与照明）。1.0 = 不变，0.0 = 无发光无照明。
-render_pipeline.module.main_render.attribute.redstone_ore_emission=发光红石矿石亮度
-render_pipeline.module.main_render.attribute.redstone_ore_emission.description=仅针对发光红石矿石的额外亮度倍率（发光与照明）。1.0 = 不变，0.0 = 无发光无照明。
-render_pipeline.module.main_render.attribute.glow_lichen_emission=发光地衣亮度
-render_pipeline.module.main_render.attribute.glow_lichen_emission.description=仅针对发光地衣的额外亮度倍率（发光与照明）。1.0 = 不变，0.0 = 无发光无照明。
 render_pipeline.module.main_render.attribute.restir_range_xz.description=控制直接光候选光源的水平搜索范围。
 render_pipeline.module.main_render.attribute.restir_range_y.description=控制直接光候选光源的垂直搜索范围。
 render_pipeline.module.main_render.attribute.initial_samples.description=控制直接光初始采样的候选光源数量。
@@ -229,3 +223,20 @@ render_pipeline.module.main_render.attribute.waving_foliage=植物晃动
 render_pipeline.module.main_render.attribute.waving_foliage.description=草、花、农作物和树叶在风中的轻柔晃动。
 render_pipeline.module.main_render.attribute.vanilla_sun=原版太阳
 render_pipeline.module.main_render.attribute.vanilla_sun.description=使用原版 Minecraft 的方形太阳纹理代替着色器的 3D 太阳。
+render_pipeline.module.main_render.attribute.emission_debug=发光调试视图
+render_pipeline.module.main_render.attribute.emission_debug.description=调试工具，请保持关闭。将相机直接看到的方块涂成纯色高亮，显示 Radiance 传给着色器的发光数据。顶点发光/偏移：数值分为 8 档（黑、红、黄、绿、青、蓝、品红、白）。纹理发光：高光贴图的 alpha。标志：R = 完整方块面，G = 有高光贴图，B = 不透明。生物、天空和水不受影响。
+render_pipeline.module.main_render.attribute.emission_debug_mode.off=关闭
+render_pipeline.module.main_render.attribute.emission_debug_mode.vertex=1：顶点发光
+render_pipeline.module.main_render.attribute.emission_debug_mode.vertex_shifted=2：顶点发光（偏移档位）
+render_pipeline.module.main_render.attribute.emission_debug_mode.texture=3：纹理发光
+render_pipeline.module.main_render.attribute.emission_debug_mode.flags=4：标志
+render_pipeline.module.main_render.attribute.magma_emission_strength=岩浆块发光亮度
+render_pipeline.module.main_render.attribute.magma_emission_strength.description=无需资源包即可调节岩浆块裂缝的自发光与照明强度。0.12 接近 SPBR 效果，1.0 为 Radiance 原始亮度。
+render_pipeline.module.main_render.attribute.redstone_ore_emission_strength=红石矿石发光亮度
+render_pipeline.module.main_render.attribute.redstone_ore_emission_strength.description=无需资源包即可调节红石矿石（含深板岩红石矿石）的自发光与照明强度。0.15 为柔和默认亮度，1.0 为 Radiance 原始亮度。
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength=发光地衣照明亮度
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength.description=调节发光地衣（放置、手持或掉落）照亮周围环境的强度。默认 3.5 可增强其偏弱的原始光照，1.0 为 Radiance 原始亮度。
+render_pipeline.module.main_render.attribute.custom_block_emission=自定义特定方块照明亮度
+render_pipeline.module.main_render.attribute.custom_block_emission.description=无需资源包即可单独调节岩浆块、红石矿石与发光地衣的照明强度。若使用了已调校这些方块的 PBR 资源包（如 SPBR），可将其关闭。
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength=发光地衣照明亮度
+render_pipeline.module.main_render.attribute.glow_lichen_emission_strength.description=调节发光地衣（放置、手持或掉落）照亮周围环境的强度。默认 3.5 可增强其偏弱的原始光照，1.0 为 Radiance 原始亮度。

@@ -175,8 +175,10 @@ bool loadPackedLight(ChunkLights chunk, uint lightIndex, out PackedLight light) 
     if (lightIndex < staticCount) {
         PackedLightBuffer lightBuffer = PackedLightBuffer(chunk.lightBufferAddress);
         light = lightBuffer.lights[lightIndex];
-        light.radiance.rgb *= sunlitEmissionScale(true) *
-                              sunlitPackedLightAdjustment(light.p0Area, light.normal, light.radiance);
+        light.radiance.rgb *=
+            sunlitEmissionScale(true) *
+            sunlitPackedLightScale(
+                light.p0Area.xyz, light.p1.xyz, light.p2.xyz, light.p3.xyz, light.normal.xyz, light.radiance, false);
         return true;
     }
 
@@ -184,10 +186,12 @@ bool loadPackedLight(ChunkLights chunk, uint lightIndex, out PackedLight light) 
     if (entityIndex >= getEntityLightCount(chunk)) { return false; }
     PackedLightBuffer lightBuffer = PackedLightBuffer(chunk.entityLightBufferAddress);
     light = lightBuffer.lights[entityIndex];
-    light.radiance.rgb *= sunlitEmissionScale(false);
+    light.radiance.rgb *=
+        sunlitEmissionScale(false) *
+        sunlitPackedLightScale(
+            light.p0Area.xyz, light.p1.xyz, light.p2.xyz, light.p3.xyz, light.normal.xyz, light.radiance, true);
     return true;
 }
-
 uvec2 packedLightSourceId(PackedLight light) {
     return uvec2(floatBitsToUint(light.sourceIdData.x), floatBitsToUint(light.sourceIdData.y));
 }
